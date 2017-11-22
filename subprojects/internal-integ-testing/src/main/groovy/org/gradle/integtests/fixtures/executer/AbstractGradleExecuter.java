@@ -1147,21 +1147,27 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
                         while (i < lines.size() && STACK_TRACE_ELEMENT.matcher(lines.get(i)).matches()) {
                             i++;
                         }
-                    } else if (isDeprecationMessageInHelpDescription(line) || isDeprecationsPrompt(line)) {
+                    } else if (isDeprecationMessageInHelpDescription(line)) {
                         i++;
+                    } else if (isDeprecationsPrompt(line)) {
+                        i++;
+                        assertDeprecationWarningExists(displayName, i, line, output);
                     } else if (line.matches(".*\\s+deprecated.*")) {
-                        if (checkDeprecations && expectedDeprecationWarnings <= 0) {
-                            throw new AssertionError(String.format("%s line %d contains a deprecation warning: %s%n=====%n%s%n=====%n", displayName, i + 1, line, output));
-                        }
-                        expectedDeprecationWarnings--;
-                        // skip over stack trace
                         i++;
+                        assertDeprecationWarningExists(displayName, i, line, output);
+                        expectedDeprecationWarnings--;
                     } else if (!expectStackTraces && STACK_TRACE_ELEMENT.matcher(line).matches() && i < lines.size() - 1 && STACK_TRACE_ELEMENT.matcher(lines.get(i + 1)).matches()) {
                         // 2 or more lines that look like stack trace elements
                         throw new AssertionError(String.format("%s line %d contains an unexpected stack trace: %s%n=====%n%s%n=====%n", displayName, i + 1, line, output));
                     } else {
                         i++;
                     }
+                }
+            }
+
+            private void assertDeprecationWarningExists(String displayName, int i, String line, String output){
+                if (checkDeprecations && expectedDeprecationWarnings <= 0) {
+                    throw new AssertionError(String.format("%s line %d contains a deprecation warning: %s%n=====%n%s%n=====%n", displayName, i + 1, line, output));
                 }
             }
 
